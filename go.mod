@@ -1,4 +1,4 @@
-module github.com/JonecoBoy/golangtarefa3
+module github.com/jonecoboy/golangtarefa3
 
 go 1.19
 
