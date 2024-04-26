@@ -8,6 +8,7 @@ import (
 	"github.com/jonecoboy/golangtarefa3/internal/infra/grpc/pb"
 	"github.com/jonecoboy/golangtarefa3/internal/infra/grpc/service"
 	"github.com/jonecoboy/golangtarefa3/internal/infra/web"
+	"github.com/jonecoboy/golangtarefa3/internal/usecase"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"net"
@@ -16,8 +17,8 @@ import (
 	graphql_handler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/jonecoboy/golangtarefa3/configs"
+	"github.com/jonecoboy/golangtarefa3/graph"
 	"github.com/jonecoboy/golangtarefa3/internal/event/handler"
-	"github.com/jonecoboy/golangtarefa3/internal/infra/graph"
 	"github.com/jonecoboy/golangtarefa3/internal/infra/web/webserver"
 	"github.com/jonecoboy/golangtarefa3/pkg/events"
 	"github.com/streadway/amqp"
@@ -46,18 +47,15 @@ func main() {
 
 	orderRepository := database.NewOrderRepository(db)
 	orderCreated := event.NewOrderCreated()
-	//createOrderUseCase := usecase.NewCreateOrderUseCase(orderRepository, orderCreated, eventDispatcher)
+	createOrderUseCase := usecase.NewCreateOrderUseCase(orderRepository, orderCreated, eventDispatcher)
 
-	createOrderUseCase := NewCreateOrderUseCase(db, eventDispatcher)
+	//createOrderUseCase := NewCreateOrderUseCase(db, eventDispatcher)
 
 	newWebServer := webserver.NewWebServer(loadConfig.WebServerPort)
 	webOrderHandler := web.NewWebOrderHandler(eventDispatcher, orderRepository, orderCreated)
 
 	newWebServer.AddHandler("/order", webOrderHandler.Create)
-	newWebServer.AddHandler("/order2", func(w http.ResponseWriter, r *http.Request) {
-		// Write "Hello, World!" to the response writer
-		fmt.Fprintf(w, "Hello, World!")
-	})
+
 	fmt.Println("Starting web server on port", loadConfig.WebServerPort)
 	go newWebServer.Start()
 

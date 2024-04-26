@@ -15,7 +15,7 @@ services:
       SERVICE_TAGS: dev
       SERVICE_NAME: mysql
     volumes:
-      - './mysql:/var/lib/mysql'
+      - '../mysql:/var/lib/mysql'
     networks:
       - golang
     healthcheck:
@@ -54,7 +54,3 @@ services:
 networks:
   golang:
     driver: bridge
-
-volumes:
-
-  dbdata:
