@@ -3,6 +3,14 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/jonecoboy/golangtarefa3/internal/event"
+	"github.com/jonecoboy/golangtarefa3/internal/infra/database"
+	"github.com/jonecoboy/golangtarefa3/internal/infra/grpc/pb"
+	"github.com/jonecoboy/golangtarefa3/internal/infra/grpc/service"
+	"github.com/jonecoboy/golangtarefa3/internal/infra/web"
+	"github.com/jonecoboy/golangtarefa3/internal/usecase"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"net"
 	"net/http"
 
@@ -11,52 +19,56 @@ import (
 	"github.com/jonecoboy/golangtarefa3/configs"
 	"github.com/jonecoboy/golangtarefa3/internal/event/handler"
 	"github.com/jonecoboy/golangtarefa3/internal/infra/graph"
-	"github.com/jonecoboy/golangtarefa3/internal/infra/grpc/pb"
-	"github.com/jonecoboy/golangtarefa3/internal/infra/grpc/service"
 	"github.com/jonecoboy/golangtarefa3/internal/infra/web/webserver"
 	"github.com/jonecoboy/golangtarefa3/pkg/events"
 	"github.com/streadway/amqp"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
-
 	// mysql
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
-	configs, err := configs.LoadConfig(".")
+	loadConfig, err := configs.LoadConfig(".")
 	if err != nil {
 		panic(err)
 	}
 
-	db, err := sql.Open(configs.DBDriver, fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", configs.DBUser, configs.DBPassword, configs.DBHost, configs.DBPort, configs.DBName))
+	db, err := sql.Open(loadConfig.DBDriver, fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", loadConfig.DBUser, loadConfig.DBPassword, loadConfig.DBHost, loadConfig.DBPort, loadConfig.DBName))
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
 
-	rabbitMQChannel := getRabbitMQChannel()
+	rabbitMQChannel := getRabbitMQChannel(loadConfig.RabbitMQConnection)
 
 	eventDispatcher := events.NewEventDispatcher()
 	eventDispatcher.Register("OrderCreated", &handler.OrderCreatedHandler{
 		RabbitMQChannel: rabbitMQChannel,
 	})
 
-	createOrderUseCase := NewCreateOrderUseCase(db, eventDispatcher)
+	orderRepository := database.NewOrderRepository(db)
+	orderCreated := event.NewOrderCreated()
+	createOrderUseCase := usecase.NewCreateOrderUseCase(orderRepository, orderCreated, eventDispatcher)
 
-	webserver := webserver.NewWebServer(configs.WebServerPort)
-	webOrderHandler := NewWebOrderHandler(db, eventDispatcher)
-	webserver.AddHandler("/order", webOrderHandler.Create)
-	fmt.Println("Starting web server on port", configs.WebServerPort)
-	go webserver.Start()
+	//createOrderUseCase := NewCreateOrderUseCase(db, eventDispatcher)
+
+	newWebServer := webserver.NewWebServer(loadConfig.WebServerPort)
+	webOrderHandler := web.NewWebOrderHandler(eventDispatcher, orderRepository, orderCreated)
+
+	newWebServer.AddHandler("/order", webOrderHandler.Create)
+	newWebServer.AddHandler("/order2", func(w http.ResponseWriter, r *http.Request) {
+		// Write "Hello, World!" to the response writer
+		fmt.Fprintf(w, "Hello, World!")
+	})
+	fmt.Println("Starting web server on port", loadConfig.WebServerPort)
+	go newWebServer.Start()
 
 	grpcServer := grpc.NewServer()
 	createOrderService := service.NewOrderService(*createOrderUseCase)
 	pb.RegisterOrderServiceServer(grpcServer, createOrderService)
 	reflection.Register(grpcServer)
 
-	fmt.Println("Starting gRPC server on port", configs.GRPCServerPort)
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", configs.GRPCServerPort))
+	fmt.Println("Starting gRPC server on port", loadConfig.GRPCServerPort)
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", loadConfig.GRPCServerPort))
 	if err != nil {
 		panic(err)
 	}
@@ -68,12 +80,12 @@ func main() {
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 
-	fmt.Println("Starting GraphQL server on port", configs.GraphQLServerPort)
-	http.ListenAndServe(":"+configs.GraphQLServerPort, nil)
+	fmt.Println("Starting GraphQL server on port", loadConfig.GraphQLServerPort)
+	http.ListenAndServe(":"+loadConfig.GraphQLServerPort, nil)
 }
 
-func getRabbitMQChannel() *amqp.Channel {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+func getRabbitMQChannel(connection string) *amqp.Channel {
+	conn, err := amqp.Dial(connection)
 	if err != nil {
 		panic(err)
 	}

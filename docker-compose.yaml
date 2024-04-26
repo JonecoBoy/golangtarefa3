@@ -1,19 +1,25 @@
-version: '3'
-
 services:
-  mysql:
-    image: mysql:5.7
-    container_name: mysql
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: orders
-      MYSQL_PASSWORD: root
-    ports:
-      - 3306:3306
-    volumes:
-      - .docker/mysql:/var/lib/mysql
 
+  mysql:
+    image: mysql:8.0.27
+    restart: unless-stopped
+    tty: true
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: 'secret'
+      MYSQL_DATABASE: 'orders'
+      MYSQL_USER: 'homestead'
+      MYSQL_PASSWORD: 'secret'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - './mysql:/var/lib/mysql'
+    networks:
+      - golang
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping" ]
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -24,3 +30,31 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - golang
+#  redis:
+#    image: 'redis:alpine'
+#    restart: unless-stopped
+#    ports:
+#      - '6379:6379'
+#    networks:
+#      - golang
+#    healthcheck:
+#      test: [ "CMD", "redis-cli", "ping" ]
+#
+#  mailpit:
+#    restart: always
+#    image: 'axllent/mailpit:latest'
+#    ports:
+#      - '1025:1025'
+#      - '8825:8025'
+#    networks:
+#      - golang
+
+networks:
+  golang:
+    driver: bridge
+
+volumes:
+
+  dbdata:
