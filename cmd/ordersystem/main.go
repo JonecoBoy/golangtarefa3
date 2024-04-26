@@ -47,9 +47,8 @@ func main() {
 
 	orderRepository := database.NewOrderRepository(db)
 	orderCreated := event.NewOrderCreated()
-	createOrderUseCase := usecase.NewCreateOrderUseCase(orderRepository, orderCreated, eventDispatcher)
 
-	//createOrderUseCase := NewCreateOrderUseCase(db, eventDispatcher)
+	createOrderUseCase := usecase.NewCreateOrderUseCase(orderRepository, orderCreated, eventDispatcher)
 
 	newWebServer := webserver.NewWebServer(loadConfig.WebServerPort)
 	webOrderHandler := web.NewWebOrderHandler(eventDispatcher, orderRepository, orderCreated)
