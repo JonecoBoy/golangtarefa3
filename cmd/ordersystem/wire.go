@@ -16,14 +16,16 @@ import (
 )
 
 var setOrderRepositoryDependency = wire.NewSet(
-	database.NewOrderRepository,
+	wire.NewSet(database.NewOrderRepository),
 	wire.Bind(new(entity.OrderRepositoryInterface), new(*database.OrderRepository)),
 )
 
 var setEventDispatcherDependency = wire.NewSet(
-	events.NewEventDispatcher,
-	event.NewOrderCreated,
+	wire.NewSet(events.NewEventDispatcher, event.NewOrderCreated),
+	// toda vez que voce ver a interface EventInterface voce via chamar o orderCreated!. TODO LUGAR QUE TIVER INTERFACE VAI TROCAR PELO OBJETO CONCRETO ORDER CREATED
+
 	wire.Bind(new(events.EventInterface), new(*event.OrderCreated)),
+	// toda vez que você ver no código EventDispatcherInterface instancie o EventDispatcher
 	wire.Bind(new(events.EventDispatcherInterface), new(*events.EventDispatcher)),
 )
 
@@ -45,6 +47,7 @@ func NewWebOrderHandler(db *sql.DB, eventDispatcher events.EventDispatcherInterf
 	wire.Build(
 		setOrderRepositoryDependency,
 		setOrderCreatedEvent,
+		// essas struct aqui tem algumas interfaces!! OrderRepositoryInterface
 		web.NewWebOrderHandler,
 	)
 	return &web.WebOrderHandler{}

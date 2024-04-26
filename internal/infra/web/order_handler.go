@@ -2,12 +2,14 @@ package web
 
 import (
 	"encoding/json"
-	"net/http"
-
 	"github.com/jonecoboy/golangtarefa3/internal/entity"
 	"github.com/jonecoboy/golangtarefa3/internal/usecase"
 	"github.com/jonecoboy/golangtarefa3/pkg/events"
+	"net/http"
 )
+
+type WebOrderHandlerInterface interface {
+}
 
 type WebOrderHandler struct {
 	EventDispatcher   events.EventDispatcherInterface

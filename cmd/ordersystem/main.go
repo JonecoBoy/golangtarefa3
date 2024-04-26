@@ -8,7 +8,6 @@ import (
 	"github.com/jonecoboy/golangtarefa3/internal/infra/grpc/pb"
 	"github.com/jonecoboy/golangtarefa3/internal/infra/grpc/service"
 	"github.com/jonecoboy/golangtarefa3/internal/infra/web"
-	"github.com/jonecoboy/golangtarefa3/internal/usecase"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"net"
@@ -47,9 +46,9 @@ func main() {
 
 	orderRepository := database.NewOrderRepository(db)
 	orderCreated := event.NewOrderCreated()
-	createOrderUseCase := usecase.NewCreateOrderUseCase(orderRepository, orderCreated, eventDispatcher)
+	//createOrderUseCase := usecase.NewCreateOrderUseCase(orderRepository, orderCreated, eventDispatcher)
 
-	//createOrderUseCase := NewCreateOrderUseCase(db, eventDispatcher)
+	createOrderUseCase := NewCreateOrderUseCase(db, eventDispatcher)
 
 	newWebServer := webserver.NewWebServer(loadConfig.WebServerPort)
 	webOrderHandler := web.NewWebOrderHandler(eventDispatcher, orderRepository, orderCreated)
