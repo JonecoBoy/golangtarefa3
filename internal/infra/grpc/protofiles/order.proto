@@ -15,6 +15,14 @@ message CreateOrderResponse {
   float final_price = 4;
 }
 
+message CreateOrderResponseList{
+  repeated CreateOrderResponse createOrderResponses =1;
+}
+
 service OrderService {
   rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
+  rpc CreateOrderStream(stream CreateOrderRequest) returns (CreateOrderResponseList){};
+
 }
+
+//protoc  --go_out=. --go-grpc_out=. internal/infra/grpc/protofiles/order.proto
