@@ -49,11 +49,13 @@ func main() {
 	orderCreated := event.NewOrderCreated()
 
 	createOrderUseCase := usecase.NewCreateOrderUseCase(orderRepository, orderCreated, eventDispatcher)
+	//listOrderUseCase := usecase.NewListOrdersUseCase(orderRepository)
 
 	newWebServer := webserver.NewWebServer(loadConfig.WebServerPort)
 	webOrderHandler := web.NewWebOrderHandler(eventDispatcher, orderRepository, orderCreated)
 
 	newWebServer.AddHandler("/order", webOrderHandler.Create)
+	newWebServer.AddHandler("/orders", webOrderHandler.List)
 
 	fmt.Println("Starting web server on port", loadConfig.WebServerPort)
 	go newWebServer.Start()
