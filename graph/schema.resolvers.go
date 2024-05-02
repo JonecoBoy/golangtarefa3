@@ -6,8 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/jonecoboy/golangtarefa3/graph/model"
 	"github.com/jonecoboy/golangtarefa3/internal/usecase"
 )
@@ -31,9 +29,36 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, input *model.OrderIn
 	}, nil
 }
 
-// Hello is the resolver for the hello field.
-func (r *queryResolver) Hello(ctx context.Context) (string, error) {
-	panic(fmt.Errorf("not implemented: Hello - hello"))
+// GetOrder is the resolver for the getOrder field.
+func (r *queryResolver) GetOrder(ctx context.Context, id string) (*model.Order, error) {
+	output, err := r.GetOrderUseCase.Execute(id)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Order{
+		ID:         output.ID,
+		Price:      float64(output.Price),
+		Tax:        float64(output.Tax),
+		FinalPrice: float64(output.FinalPrice),
+	}, nil
+}
+
+// ListOrders is the resolver for the listOrders field.
+func (r *queryResolver) ListOrders(ctx context.Context) ([]*model.Order, error) {
+	output, err := r.ListOrderUseCase.Execute()
+	if err != nil {
+		return nil, err
+	}
+	orders := make([]*model.Order, len(output))
+	for i := range output {
+		orders[i] = &model.Order{
+			ID:         output[i].ID,
+			Price:      float64(output[i].Price),
+			Tax:        float64(output[i].Tax),
+			FinalPrice: float64(output[i].FinalPrice),
+		}
+	}
+	return orders, nil
 }
 
 // Mutation returns MutationResolver implementation.

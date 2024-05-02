@@ -6,7 +6,6 @@ require (
 	github.com/99designs/gqlgen v0.17.45
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/go-sql-driver/mysql v1.7.0
-	github.com/google/wire v0.5.0
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/spf13/viper v1.14.0
 	github.com/streadway/amqp v1.0.0

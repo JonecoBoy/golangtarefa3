@@ -8,4 +8,6 @@ import "github.com/jonecoboy/golangtarefa3/internal/usecase"
 
 type Resolver struct {
 	CreateOrderUseCase usecase.CreateOrderUseCase
+	GetOrderUseCase    usecase.GetOrderUseCase
+	ListOrderUseCase   usecase.ListOrdersUseCase
 }

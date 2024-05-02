@@ -11,15 +11,19 @@ import (
 type OrderService struct {
 	pb.UnimplementedOrderServiceServer
 	CreateOrderUseCase usecase.CreateOrderUseCase
+	GetOrderUseCase    usecase.GetOrderUseCase
+	ListOrdersUseCase  usecase.ListOrdersUseCase
 }
 
-func NewOrderService(createOrderUseCase usecase.CreateOrderUseCase) *OrderService {
+func NewOrderService(createOrderUseCase usecase.CreateOrderUseCase, getOrderUseCase usecase.GetOrderUseCase, listOrdersUseCase usecase.ListOrdersUseCase) *OrderService {
 	return &OrderService{
 		CreateOrderUseCase: createOrderUseCase,
+		GetOrderUseCase:    getOrderUseCase,
+		ListOrdersUseCase:  listOrdersUseCase,
 	}
 }
 
-func (s *OrderService) CreateOrder(ctx context.Context, in *pb.CreateOrderRequest) (*pb.CreateOrderResponse, error) {
+func (s *OrderService) CreateOrder(ctx context.Context, in *pb.CreateOrderRequest) (*pb.OrderResponse, error) {
 	dto := usecase.OrderInputDTO{
 		ID:    in.Id,
 		Price: float64(in.Price),
@@ -29,7 +33,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, in *pb.CreateOrderReques
 	if err != nil {
 		return nil, err
 	}
-	return &pb.CreateOrderResponse{
+	return &pb.OrderResponse{
 		Id:         output.ID,
 		Price:      float32(output.Price),
 		Tax:        float32(output.Tax),
@@ -38,7 +42,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, in *pb.CreateOrderReques
 }
 
 func (s *OrderService) CreateOrderStream(stream pb.OrderService_CreateOrderStreamServer) error {
-	orders := &pb.CreateOrderResponseList{}
+	orders := &pb.OrderResponseList{}
 	for {
 		order, err := stream.Recv()
 		if err == io.EOF {
@@ -53,11 +57,52 @@ func (s *OrderService) CreateOrderStream(stream pb.OrderService_CreateOrderStrea
 		if err != nil {
 			return err
 		}
-		orders.CreateOrderResponses = append(orders.CreateOrderResponses, &pb.CreateOrderResponse{
+		orders.CreateOrderResponses = append(orders.CreateOrderResponses, &pb.OrderResponse{
 			Id:         output.ID,
 			Price:      float32(output.Price),
 			Tax:        float32(output.Tax),
 			FinalPrice: float32(output.FinalPrice),
 		})
 	}
+}
+
+func (s *OrderService) GetOrder(ctx context.Context, in *pb.GetOrderRequest) (*pb.OrderResponse, error) {
+	// Convert the GetOrderRequest to the input DTO for your use case
+
+	// Execute the use case with the input DTO
+	output, err := s.GetOrderUseCase.Execute(in.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert the output DTO to the OrderResponse
+	return &pb.OrderResponse{
+		Id:         output.ID,
+		Price:      float32(output.Price),
+		Tax:        float32(output.Tax),
+		FinalPrice: float32(output.FinalPrice),
+	}, nil
+}
+
+func (s *OrderService) ListOrders(ctx context.Context, in *pb.ListOrderRequest) (*pb.OrderResponseList, error) {
+	// Execute the use case
+	outputs, err := s.ListOrdersUseCase.Execute()
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert the output DTOs to the OrderResponseList
+	responses := make([]*pb.OrderResponse, len(outputs))
+	for i, output := range outputs {
+		responses[i] = &pb.OrderResponse{
+			Id:         output.ID,
+			Price:      float32(output.Price),
+			Tax:        float32(output.Tax),
+			FinalPrice: float32(output.FinalPrice),
+		}
+	}
+
+	return &pb.OrderResponseList{
+		CreateOrderResponses: responses,
+	}, nil
 }

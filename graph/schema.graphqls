@@ -19,5 +19,6 @@ type Mutation {
   createOrder(input: OrderInput): Order
 }
 type Query {
-  hello: String!
+  getOrder(id: String!): Order
+  listOrders: [Order]
 }

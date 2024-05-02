@@ -49,7 +49,8 @@ func main() {
 	orderCreated := event.NewOrderCreated()
 
 	createOrderUseCase := usecase.NewCreateOrderUseCase(orderRepository, orderCreated, eventDispatcher)
-	//listOrderUseCase := usecase.NewListOrdersUseCase(orderRepository)
+	listOrdersUseCase := usecase.NewListOrdersUseCase(orderRepository)
+	getOrderUseCase := usecase.NewGetOrdersUseCase(orderRepository)
 
 	newWebServer := webserver.NewWebServer(loadConfig.WebServerPort)
 	webOrderHandler := web.NewWebOrderHandler(eventDispatcher, orderRepository, orderCreated)
@@ -61,7 +62,7 @@ func main() {
 	go newWebServer.Start()
 
 	grpcServer := grpc.NewServer()
-	createOrderService := service.NewOrderService(*createOrderUseCase)
+	createOrderService := service.NewOrderService(*createOrderUseCase, *getOrderUseCase, *listOrdersUseCase)
 	pb.RegisterOrderServiceServer(grpcServer, createOrderService)
 	reflection.Register(grpcServer)
 
@@ -74,6 +75,8 @@ func main() {
 
 	srv := graphql_handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
 		CreateOrderUseCase: *createOrderUseCase,
+		GetOrderUseCase:    *getOrderUseCase,
+		ListOrderUseCase:   *listOrdersUseCase,
 	}}))
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)

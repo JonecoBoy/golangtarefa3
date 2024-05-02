@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"github.com/jonecoboy/golangtarefa3/internal/entity"
-	"github.com/jonecoboy/golangtarefa3/pkg/events"
 )
 
 type ListOrderOutputDTO struct {
@@ -12,21 +11,19 @@ type ListOrderOutputDTO struct {
 	FinalPrice float64 `json:"final_price"`
 }
 
-type ListOrderUseCase struct {
+type ListOrdersUseCase struct {
 	OrderRepository entity.OrderRepositoryInterface
-	OrderCreated    events.EventInterface
-	EventDispatcher events.EventDispatcherInterface
 }
 
 func NewListOrdersUseCase(
 	OrderRepository entity.OrderRepositoryInterface,
-) *ListOrderUseCase {
-	return &ListOrderUseCase{
+) *ListOrdersUseCase {
+	return &ListOrdersUseCase{
 		OrderRepository: OrderRepository,
 	}
 }
 
-func (c *ListOrderUseCase) Execute() ([]OrderOutputDTO, error) {
+func (c *ListOrdersUseCase) Execute() ([]OrderOutputDTO, error) {
 
 	result, err := c.OrderRepository.List()
 	if err != nil {
