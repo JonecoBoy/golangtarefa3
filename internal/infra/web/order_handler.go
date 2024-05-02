@@ -6,6 +6,7 @@ import (
 	"github.com/jonecoboy/golangtarefa3/internal/usecase"
 	"github.com/jonecoboy/golangtarefa3/pkg/events"
 	"net/http"
+	"regexp"
 )
 
 type WebOrderHandlerInterface interface {
@@ -53,6 +54,27 @@ func (h *WebOrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *WebOrderHandler) List(w http.ResponseWriter, r *http.Request) {
 	listOrders := usecase.NewListOrdersUseCase(h.OrderRepository)
 	output, err := listOrders.Execute()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = json.NewEncoder(w).Encode(output)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *WebOrderHandler) Get(w http.ResponseWriter, r *http.Request) {
+	getOrder := usecase.NewGetOrdersUseCase(h.OrderRepository)
+	re := regexp.MustCompile(`/order/(\d+)`)
+	matches := re.FindStringSubmatch(r.URL.Path)
+	if len(matches) < 2 {
+		http.Error(w, "parsing error", http.StatusInternalServerError)
+	}
+	id := matches[1]
+
+	output, err := getOrder.Execute(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
