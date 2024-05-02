@@ -79,7 +79,7 @@ func (suite *OrderRepositoryTestSuite) TestListAllOrders() {
 	err = repo.Save(order2)
 	suite.NoError(err)
 
-	orders, err := repo.ListOrders()
+	orders, err := repo.List()
 	suite.NoError(err)
 	suite.Len(orders, 2)
 	suite.Equal(order1.ID, orders[0].ID)
