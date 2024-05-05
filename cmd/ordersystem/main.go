@@ -37,6 +37,7 @@ func main() {
 		panic(err)
 	}
 	defer db.Close()
+	createTableIfDontExist(db)
 
 	rabbitMQChannel := getRabbitMQChannel(loadConfig.RabbitMQConnection)
 
@@ -97,4 +98,14 @@ func getRabbitMQChannel(connection string) *amqp.Channel {
 		panic(err)
 	}
 	return ch
+}
+
+func createTableIfDontExist(db *sql.DB) {
+	_, err := db.Exec("CREATE TABLE orders (id varchar(255) NOT NULL, price float NOT NULL, tax float NOT NULL, final_price float NOT NULL, PRIMARY KEY (id))")
+	if err != nil {
+		fmt.Println("Tabela Orders já existe")
+	} else {
+		fmt.Println("Orders Table created")
+	}
+
 }
